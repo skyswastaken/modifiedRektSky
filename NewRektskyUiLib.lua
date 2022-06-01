@@ -2,37 +2,37 @@ repeat task.wait() until game:IsLoaded()
 
 local lib = {
     ["Rainbow"] = false,
-    ["Notifications"] = false,
+    ["Notifications"] = true,
     ["Sounds"] = true,
-    ["GuiKeybind"] = "RightShift",
+    ["GuiKeybind"] = "A",
     ["IsDraggable"] = true,
     ["Objects"] = {}
 }
 
-if isfolder("rektsky") == false then
-    makefolder("rektsky")
+if isfolder("ModdedRektSky") == false then
+    makefolder("ModdedRektSky")
 end
 
-if isfolder("rektsky/sound") == false then
-    makefolder("rektsky/sound")
+if isfolder("ModdedRektSky/sound") == false then
+    makefolder("ModdedRektSky/sound")
 end
 
 if isfolder("rektsky/sound/mc") == false then
-    makefolder("rektsky/sound/mc")
+    makefolder("ModdedRektsky/sound/mc")
 end
 
-if isfolder("rektsky/assets") == false then
-    makefolder("rektsky/assets")
+if isfolder("ModdedRektsky/assets") == false then
+    makefolder("ModdedRektsky/assets")
 end
 
-if isfolder("rektsky/config") == false then
-    makefolder("rektsky/config")
+if isfolder("ModdedRektsky/config") == false then
+    makefolder("ModdedRektsky/config")
 end
 
 
 local sliderapi = {}
 
-local foldername = "rektsky/config"
+local foldername = "ModdedRktsky/config"
 local conf = {
 	["file"]=foldername.."/"..game.PlaceId..".json",
 	["functions"]={}
@@ -80,7 +80,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 local ScreenGuitwo = Instance.new("ScreenGui")
 ScreenGuitwo.Parent = game:WaitForChild("CoreGui")
 ScreenGuitwo.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGuitwo.Name = "RektskyNotificationGui"
+ScreenGuitwo.Name = "ModifiedRektskyNotificationGui"
 local getasset = getsynasset or getcustomasset
 
 local requestfunc = syn and syn.request or http and http.request or http_request or fluxus and fluxus.request or request or function(tab)
@@ -228,7 +228,7 @@ local function createnotification(title, text, delay2, toggled)
         end)
     end)
 end
-createnotification("Loaded", "Press Right-Shift to toggle GUI", 3, true)
+createnotification("Loaded", "Press A to open GUI", 3, true)
 local function dragGUI(gui, dragpart)
     spawn(function()
         local dragging
@@ -821,7 +821,7 @@ function lib:CreateWindow()
 end
 lib:ToggleLib()
 uis.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightShift then
+    if input.KeyCode == Enum.KeyCode.A then
         lib:ToggleLib()
     end
 end) 
