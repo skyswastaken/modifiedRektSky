@@ -1,8 +1,28 @@
 repeat task.wait() until game:IsLoaded()
 
+assert(getrawmetatable)
+gmt = getrawmetatable(game)
+setreadonly(gmt, false)
+old = gmt.__namecall
+gmt.__namecall = newcclosure(
+	function(self, ...)
+	local args = {...}
+	if tostring(args[1]) == "RequestStatusUpdate" then
+		return
+	end
+    return old(self, ...)
+end)
+
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/8pmX8/rektsky4roblox/main/NewRektskyUiLib.lua"))()
 
 local entity = loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/Libraries/entityHandler.lua", true))()
+
+
+local whiteliststhing = {}
+
+pcall(function()
+    whiteliststhing = loadstring(game:HttpGet("https://raw.githubusercontent.com/8pmX8/rektsky4roblox/main/whitelist.lua"))()
+end)
 
 do
     local oldcharacteradded = entity.characterAdded
@@ -88,7 +108,7 @@ local itemtablefunc = require(game:GetService("ReplicatedStorage").TS.item["item
 local itemtable = debug.getupvalue(itemtablefunc, 1)
 local matchend = require(game:GetService("Players").LocalPlayer.PlayerScripts.TS.controllers.game.match["match-end-controller"]).MatchEndController
 local matchstate = require(game:GetService("ReplicatedStorage").TS.match["match-state"]).MatchState
-local KnitClient = require(game:GetService("ReplicatedStorage")["rbxts_include"]["node_modules"].knit.src).KnitClient
+local KnitClient = debug.getupvalue(require(lplr.PlayerScripts.TS.knit).setup, 6)
 local ballooncontroller = KnitClient.Controllers.BalloonController
 local queuemeta = require(game:GetService("ReplicatedStorage").TS.game["queue-meta"]).QueueMeta
 local clntstorehandlr = require(game.Players.LocalPlayer.PlayerScripts.TS.ui.store).ClientStore
@@ -229,31 +249,35 @@ function KillauraRemote()
             local mag = (v.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
             if mag <= DistVal["Value"] and v.Team ~= game.Players.LocalPlayer.Team and v.Character:FindFirstChild("Humanoid") then
                 if v.Character.Humanoid.Health > 0 then
-                    rgfejd = true
-                    local GBW = getsword()
-                    local selfPosition = lplr.Character.HumanoidRootPart.Position + (DistVal["Value"] > 14 and (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude > 14 and (CFrame.lookAt(lplr.Character.HumanoidRootPart.Position, v.Character.HumanoidRootPart.Position).lookVector * 4) or Vector3.new(0, 0, 0))
-                    local Entity = v.Character
-                    local target = v.Character:GetPrimaryPartCFrame().Position
-                    attackentitycont:CallServer({
-                        ["chargedAttack"] = {["chargeRatio"] = 1},
-                        ["weapon"] = GBW ~= nil and GBW.tool,
-                        ["entityInstance"] = Entity,
-                        ["validate"] = {["targetPosition"] = {["value"] = target,
-                            ["hash"] = hvFunc(target)},
-                            ["raycast"] = {
-                                ["cameraPosition"] = hvFunc(cam.CFrame.Position), 
-                                ["cursorDirection"] = hvFunc(Ray.new(cam.CFrame.Position, v.Character:GetPrimaryPartCFrame().Position).Unit.Direction)
-                            },
-                            ["selfPosition"] = {["value"] = selfPosition,
-                                ["hash"] = hvFunc(selfPosition)
-                            }
-                        }
-                    })
-                    if killauraissoundenabled["Value"] then
-                        playsound("rbxassetid://6760544639", killaurasoundvalue["Value"])
-                    end
-                    if killauraisswingenabled["Value"] then         
-                        playanimation("rbxassetid://4947108314")
+                    for k, b in pairs(whiteliststhing) do
+                        if v.UserId ~= tonumber(b) then
+                            rgfejd = true
+                            local GBW = getsword()
+                            local selfPosition = lplr.Character.HumanoidRootPart.Position + (DistVal["Value"] > 14 and (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude > 14 and (CFrame.lookAt(lplr.Character.HumanoidRootPart.Position, v.Character.HumanoidRootPart.Position).lookVector * 4) or Vector3.new(0, 0, 0))
+                            local Entity = v.Character
+                            local target = v.Character:GetPrimaryPartCFrame().Position
+                            attackentitycont:CallServer({
+                                ["chargedAttack"] = {["chargeRatio"] = 1},
+                                ["weapon"] = GBW ~= nil and GBW.tool,
+                                ["entityInstance"] = Entity,
+                                ["validate"] = {["targetPosition"] = {["value"] = target,
+                                    ["hash"] = hvFunc(target)},
+                                    ["raycast"] = {
+                                        ["cameraPosition"] = hvFunc(cam.CFrame.Position), 
+                                        ["cursorDirection"] = hvFunc(Ray.new(cam.CFrame.Position, v.Character:GetPrimaryPartCFrame().Position).Unit.Direction)
+                                    },
+                                    ["selfPosition"] = {["value"] = selfPosition,
+                                        ["hash"] = hvFunc(selfPosition)
+                                    }
+                                }
+                            })
+                            if killauraissoundenabled["Value"] then
+                                playsound("rbxassetid://6760544639", killaurasoundvalue["Value"])
+                            end
+                            if killauraisswingenabled["Value"] then         
+                                playanimation("rbxassetid://4947108314")
+                            end
+                        end
                     end
                 end
             else
@@ -338,51 +362,6 @@ local isclone = false
     end
 end--]]
 
-function getclosebed()
-    for i,v in pairs(game:GetService("Workspace").Map.Blocks:GetChildren()) do
-        if v.Name == "bed" and v:FindFirstChild("Covers") then
-            local magcheck = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Covers.Position).Magnitude
-            if magcheck <= 45 then
-                return v
-            end
-        end
-    end
-end
-
-local added
-function getanumber()
-    added = 0
-    for i,v in pairs(game.Workspace.Map.Blocks:GetChildren()) do
-        local target = getclosebed()
-        if target ~= nil and v.Position then
-            if target.Position.X == v.Position.X and target.Position.Z == v.Position.Z then
-                if v.Position.Y > target.Position.Y and v.Position.Y - target.Position.Y < 16.5 then
-                    added = added + 1
-                end
-                if v.Position.Y < target.Position.Y and v.Position.Y - target.Position.Y < 16.5 then
-                    added = added - 1
-                end
-            end
-        end
-    end
-    return added
-end
-
-function hitblock(X,Y,Z)
-    local args = {
-        [1] = {
-            ["blockRef"] = {
-                ["blockPosition"] = Vector3.new(X/3,Y/3,Z/3)
-            },
-            ["hitPosition"] = Vector3.new(X/3,Y/3,Z/3),
-            ["hitNormal"] = Vector3.new(X/3,Y/3,Z/3)
-        }
-    }
-
-    game:GetService("ReplicatedStorage").rbxts_include.node_modules.net.out._NetManaged.DamageBlock:InvokeServer(unpack(args))
-end
-
-
 local function getItem(itemName)
 	for i5, v5 in pairs(getinv(lplr)["items"]) do
 		if v5["itemType"] == itemName then
@@ -401,7 +380,8 @@ local function getwool()
 	return nil
 end
 
-repeat task.wait() until (game:GetService("ReplicatedStorage")["rbxts_include"]["node_modules"]:FindFirstChild("@easy-games"))
+local Flamework = require(game.ReplicatedStorage["rbxts_include"]["node_modules"]["@flamework"].core.out).Flamework
+repeat task.wait() until (Flamework.isInitialized)
 
 local BlockController2 = require(game:GetService("ReplicatedStorage")["rbxts_include"]["node_modules"]["@easy-games"]["block-engine"].out.client.placement["block-placer"]).BlockPlacer
 local blockcontroller = require(game:GetService("ReplicatedStorage")["rbxts_include"]["node_modules"]["@easy-games"]["block-engine"].out).BlockEngine
@@ -446,7 +426,9 @@ do
                         task.wait()
                         if (not kauraval) then break end
                         if entity.isAlive then
-                            KillauraRemote()
+                            pcall(function()
+                                KillauraRemote()
+                            end)
                         end
                     until (not kauraval)
                 else
@@ -463,39 +445,41 @@ do
                             if v.Character and v.Name ~= game.Players.LocalPlayer.Name and v.Character:FindFirstChild("HumanoidRootPart") then
                                 if v.Team ~= tostring(lplr.Team) then
                                     if killaurafirstpersonanim["Value"] then
-                                        if killauraanimval["Value"] == "Cool" then
-                                            if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
-                                                for i, v in pairs(autoblockanim) do
-                                                    coolanimlol = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
-                                                    coolanimlol:Play()
-                                                    task.wait(v.Time - 0.01)
+                                        pcall(function()
+                                            if killauraanimval["Value"] == "Cool" then
+                                                if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
+                                                    for i, v in pairs(autoblockanim) do
+                                                        coolanimlol = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
+                                                        coolanimlol:Play()
+                                                        task.wait(v.Time - 0.01)
+                                                    end
                                                 end
-                                            end
-                                        elseif killauraanimval["Value"] == "German" then
-                                            if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
-                                                for i, v in pairs(funnyanim) do
-                                                    killauracurrentanim = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
-                                                    killauracurrentanim:Play()
-                                                    task.wait(v.Time - 0.01)
+                                            elseif killauraanimval["Value"] == "German" then
+                                                if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
+                                                    for i, v in pairs(funnyanim) do
+                                                        killauracurrentanim = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
+                                                        killauracurrentanim:Play()
+                                                        task.wait(v.Time - 0.01)
+                                                    end
                                                 end
-                                            end
-                                        elseif killauraanimval["Value"] == "Penis" then
-                                            if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
-                                                for i, v in pairs(theotherfunnyanim) do
-                                                    killauracurrentanim = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
-                                                    killauracurrentanim:Play()
-                                                    task.wait(v.Time - 0.01)
+                                            elseif killauraanimval["Value"] == "Penis" then
+                                                if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
+                                                    for i, v in pairs(theotherfunnyanim) do
+                                                        killauracurrentanim = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
+                                                        killauracurrentanim:Play()
+                                                        task.wait(v.Time - 0.01)
+                                                    end
                                                 end
-                                            end
-                                        elseif killauraanimval["Value"] == "KillMyself" then
-                                            if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
-                                                for i, v in pairs(kmsanim) do
-                                                    killauracurrentanim = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
-                                                    killauracurrentanim:Play()
-                                                    task.wait(v.Time - 0.01)
+                                            elseif killauraanimval["Value"] == "KillMyself" then
+                                                if entity.isAlive and cam.Viewmodel.RightHand.RightWrist and origC0 then
+                                                    for i, v in pairs(kmsanim) do
+                                                        killauracurrentanim = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = origC0 * v.CFrame})
+                                                        killauracurrentanim:Play()
+                                                        task.wait(v.Time - 0.01)
+                                                    end
                                                 end
-                                            end
-                                        end
+                                            end    
+                                        end)
                                     end
                                 end
                             end
@@ -519,6 +503,7 @@ do
     })
     killauraissoundenabled = katog:CreateOptionTog({
         ["Name"] = "Swing Sound",
+        ["Default"] = true,
         ["Func"] = function() end
     })
     killaurasoundvalue = katog:CreateSlider({
@@ -526,11 +511,12 @@ do
         ["Function"] = function() end,
         ["Min"] = 0,
         ["Max"] = 1,
-        ["Default"] = 1,
+        ["Default"] = 0.2,
         ["Round"] = 1
     })
     killauraisswingenabled = katog:CreateOptionTog({
         ["Name"] = "Swing Animation",
+        ["Default"] = true,
         ["Func"] = function() end
     })
     DistVal = katog:CreateSlider({
@@ -543,6 +529,7 @@ do
     })
     killaurafirstpersonanim = katog:CreateOptionTog({
         ["Name"] = "Anims (1rs person)",
+        ["Default"] = true,
         ["Func"] = function() end
     })
     killauraanimval = katog:CreateDropDown({
@@ -571,6 +558,7 @@ do
         ["Round"] = 1
     })
 end
+
 
 --[[local conectionkillauraV2
 Tabs["Combat"]:CreateToggle({
@@ -885,123 +873,123 @@ function tpreal(t)
     end
 end
 
-do
-    local connectionnn
-    local conectthing
-    local longjumpenabled
-    local floatdisab
-    local speed
-    local speedvalue = {["Value"] = 45}
-    local speeddropdown = {["Value"] = "CFrame"}
-    local speedvalueverus = {["Value"] = 80}
-    local verusspeeddelay = {["Value"] = 0.5}
-    local speedtog = Tabs["Movement"]:CreateToggle({
-        ["Name"] = "Speed",
-        ["Keybind"] = nil,
-        ["Callback"] = function(v)
-            local thing = v
-            if thing then
-                spawn(function()
-                    if matchState == 0 then
-                        createnotification("Speed", "Will enable speed when match started!", 4, true)
-                    end
-                end)
-                repeat wait() 
-                    if (not thing) then 
-                        break 
-                    end
-                until (matchState == 1)
-                if (not thing) then return end
-                if speeddropdown["Value"] == "CFrame" then
-                    if matchState == 1 then
-                        spawn(function()
+local speedvalue = {["Value"] = 45}
+local connectionnn
+local conectthing
+local longjumpenabled
+local floatdisab
+local speed
+local speeddropdown = {["Value"] = "CFrame"}
+local speedvalueverus = {["Value"] = 80}
+local verusspeeddelay = {["Value"] = 0.5}
+local speedtog = Tabs["Movement"]:CreateToggle({
+    ["Name"] = "Speed",
+    ["Keybind"] = nil,
+    ["Callback"] = function(v)
+        local thing = v
+        if thing then
+            spawn(function()
+                if matchState == 0 then
+                    createnotification("Speed", "Will enable speed when match started!", 4, true)
+                end
+            end)
+            repeat wait() 
+                if (not thing) then 
+                    break 
+                end
+            until (matchState == 1)
+            if (not thing) then return end
+            if speeddropdown["Value"] == "CFrame" then
+                if matchState == 1 then
+                    spawn(function()
+                        pcall(function()
                             speed = 23
                             connectionnn = game:GetService("RunService").Heartbeat:connect(function()
                                 local velo = lplr.Character.Humanoid.MoveDirection * speed
                                 lplr.Character.HumanoidRootPart.Velocity = Vector3.new(velo.x, lplr.Character.HumanoidRootPart.Velocity.y, velo.z)
-                            end)
-                            conectthing = game:GetService("RunService").Stepped:connect(function(time, delta)
-                                if entity.isAlive then
-                                    if (not isnetworkowner(lplr.Character.HumanoidRootPart)) then
-                                        lagbacked = true
-                                    end
-                                    if (isnetworkowner(lplr.Character.HumanoidRootPart)) then
-                                        lagbacked = false
-                                    end
-                                    if speeddropdown["Value"] == "Verus" then conectthing:Disconnect() end
-                                    if lplr.Character.Humanoid.MoveDirection.Magnitude > 0 and isnetworkowner(lplr.Character.HumanoidRootPart) then
-                                        lplr.Character:TranslateBy(lplr.Character.Humanoid.MoveDirection * (lagbacked and speedvalue["Value"] * 3 or speedvalue["Value"] * 5.4) / 10 * delta)
-                                    end
-                                end
-                                task.wait()
-                            end)
+                            end)    
                         end)
-                    end
-                elseif speeddropdown["Value"] == "Verus" then
-                    pcall(function()
-                        if conectthing then conectthing:Disconnect() end
-                    end)
-                    speedverus = 23
-                    connectionnnverus = game:GetService("RunService").Heartbeat:connect(function()
-                        local velo = lplr.Character.Humanoid.MoveDirection * speed
-                        lplr.Character.HumanoidRootPart.Velocity = Vector3.new(velo.x, lplr.Character.HumanoidRootPart.Velocity.y, velo.z)
-                    end)
-                    if matchState == 1 then
-                        repeat
-                            if (not thing) then return end
-                            if (speeddropdown["Value"] == "CFrame") then 
-                                connectionnnverus:Disconnect()
-                                return 
+                        conectthing = game:GetService("RunService").Stepped:connect(function(time, delta)
+                            if entity.isAlive then
+                                if (not isnetworkowner(lplr.Character.HumanoidRootPart)) then
+                                    lagbacked = true
+                                end
+                                if (isnetworkowner(lplr.Character.HumanoidRootPart)) then
+                                    lagbacked = false
+                                end
+                                if speeddropdown["Value"] == "Verus" then conectthing:Disconnect() end
+                                if lplr.Character.Humanoid.MoveDirection.Magnitude > 0 and isnetworkowner(lplr.Character.HumanoidRootPart) then
+                                    lplr.Character:TranslateBy(lplr.Character.Humanoid.MoveDirection * (lagbacked and speedvalue["Value"] * 3 or speedvalue["Value"] * 5.4) / 10 * delta)
+                                end
                             end
-                            speed = 23
-                            wait(0.4)
-                            speed = speedvalueverus["Value"]
-                            wait(verusspeeddelay["Value"])
-                        until (not thing)
-                    end
+                            task.wait()
+                        end)
+                    end)
                 end
-            else
-                if speeddropdown["Value"] == "CFrame" then
-                    conectthing:Disconnect()
-                    connectionnn:Disconnect()
-                elseif speeddropdown["Value"] == "Verus" then
-                    connectionnnverus:Disconnect()
-                    return
+            elseif speeddropdown["Value"] == "Verus" then
+                pcall(function()
+                    if conectthing then conectthing:Disconnect() end
+                end)
+                speedverus = 23
+                connectionnnverus = game:GetService("RunService").Heartbeat:connect(function()
+                    local velo = lplr.Character.Humanoid.MoveDirection * speed
+                    lplr.Character.HumanoidRootPart.Velocity = Vector3.new(velo.x, lplr.Character.HumanoidRootPart.Velocity.y, velo.z)
+                end)
+                if matchState == 1 then
+                    repeat
+                        if (not thing) then return end
+                        if (speeddropdown["Value"] == "CFrame") then 
+                            connectionnnverus:Disconnect()
+                            return 
+                        end
+                        speed = 23
+                        wait(0.4)
+                        speed = speedvalueverus["Value"]
+                        wait(verusspeeddelay["Value"])
+                    until (not thing)
                 end
             end
+        else
+            if speeddropdown["Value"] == "CFrame" then
+                conectthing:Disconnect()
+                connectionnn:Disconnect()
+            elseif speeddropdown["Value"] == "Verus" then
+                connectionnnverus:Disconnect()
+                return
+            end
         end
-    })
-    speedvalue = speedtog:CreateSlider({
-        ["Name"] = "SpeedValue",
-        ["Function"] = function() end,
-        ["Min"] = 0,
-        ["Max"] = 50,
-        ["Default"] = 45,
-        ["Round"] = 0
-    })
-    speeddropdown = speedtog:CreateDropDown({
-        ["Name"] = "SpeedMode",
-        ["Function"] = function() end,
-        ["List"] = {"CFrame", "Verus"},
-        ["Default"] = "CFrame"
-    })
-    speedvalueverus = speedtog:CreateSlider({
-        ["Name"] = "VerusSpeed",
-        ["Function"] = function() end,
-        ["Min"] = 0,
-        ["Max"] = 350,
-        ["Default"] = 80,
-        ["Round"] = 0
-    })
-    verusspeeddelay = speedtog:CreateSlider({
-        ["Name"] = "VerusTicks",
-        ["Function"] = function() end,
-        ["Min"] = 0,
-        ["Max"] = 1,
-        ["Default"] = 0.5,
-        ["Round"] = 1
-    })
-end
+    end
+})
+speedvalue = speedtog:CreateSlider({
+    ["Name"] = "SpeedValue",
+    ["Function"] = function() end,
+    ["Min"] = 0,
+    ["Max"] = 45,
+    ["Default"] = 45,
+    ["Round"] = 0
+})
+speeddropdown = speedtog:CreateDropDown({
+    ["Name"] = "SpeedMode",
+    ["Function"] = function() end,
+    ["List"] = {"CFrame", "Verus"},
+    ["Default"] = "CFrame"
+})
+speedvalueverus = speedtog:CreateSlider({
+    ["Name"] = "VerusSpeed",
+    ["Function"] = function() end,
+    ["Min"] = 0,
+    ["Max"] = 350,
+    ["Default"] = 80,
+    ["Round"] = 0
+})
+verusspeeddelay = speedtog:CreateSlider({
+    ["Name"] = "VerusTicks",
+    ["Function"] = function() end,
+    ["Min"] = 0,
+    ["Max"] = 1,
+    ["Default"] = 0.5,
+    ["Round"] = 1
+})
 
 local sprint = false
 Tabs["Movement"]:CreateToggle({
@@ -1073,30 +1061,26 @@ do
     local longjumpval = false
     local gravityval = {["Value"] = 0}
     local longjumpdelay = {["Value"] = 0.1}
+    local LJSpeed = {["Value"] = 100}
+    local oldthing
     local lognjump = Tabs["Movement"]:CreateToggle({
         ["Name"] = "LongJump",
         ["Keybind"] = nil,
         ["Callback"] = function(v)
             longjumpval = v
             if longjumpval then
+                oldthing = oldthing or speedvalue["Value"]
                 workspace.Gravity = gravityval["Value"]
-                spawn(function()
-                    repeat
-                        if (not longjumpval) then return end
-                        lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-                        wait(longjumpdelay["Value"])
-                        lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Running)
-                        wait(longjumpdelay["Value"])
-                        lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Climbing)
-                        wait(longjumpdelay["Value"])
-                        lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-                        wait(longjumpdelay["Value"])
-                        lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
-                        wait(longjumpdelay["Value"])
-                    until (not longjumpval)
-                end)
+                repeat
+                    if (not longjumpval) then break end
+                    speedvalue["Value"] = LJSpeed["Value"]
+                    task.wait(longjumpdelay["Value"])
+                    speedvalue["Value"] = oldthing
+                    task.wait(0.12)
+                until (not longjumpval)
             else
                 workspace.Gravity = 196.19999694824
+                speedvalue["Value"] = oldthing
                 return
             end
         end
@@ -1116,6 +1100,14 @@ do
         ["Max"] = 1,
         ["Default"] = 0.1,
         ["Round"] = 1
+    })
+    LJSpeed = lognjump:CreateSlider({
+        ["Name"] = "Speed",
+        ["Function"] = function() end,
+        ["Min"] = 45,
+        ["Max"] = 120,
+        ["Default"] = 70,
+        ["Round"] = 0
     })
 end
 
@@ -1533,68 +1525,58 @@ local function makeRainbowFrame(frame)
     end)
 end
 
-local surface
-local players = game:GetService("Players")
-local currentPlayer = nil
-local lplayer = players.LocalPlayer
-local espfaces = {"Front","Back","Bottom","Left","Right","Top"} 
-local ENEMYCOLOR =  {255,0,0}
-local ALLYCOLOR =  {0,0,255}
+local ESPFolder
 Tabs["Render"]:CreateToggle({
     ["Name"] = "ESP",
     ["Keybind"] = nil,
     ["Callback"] = function(v)
+        local thing
         local espval = v
         if espval then
-            function createFlex()
-                players.PlayerAdded:Connect(function(p)
-                    currentPlayer = p
-                    p.CharacterAdded:Connect(function(character)
-                        createESP(character)            
-                    end)     
-                end)
-                function checkPart(obj)  if (obj:IsA("Part") or obj:IsA("MeshPart")) and obj.Name~="HumanoidRootPart" then return true end end 
-                function actualESP(obj) 
-                    for i=0,5 do
-                        surface = Instance.new("SurfaceGui",obj)
-                        surface.Face = Enum.NormalId[espfaces[i+1]]
-                        surface.AlwaysOnTop = true
-            
-                        frame = Instance.new("Frame",surface)
-                        frame.Size = UDim2.new(1,0,1,0)
-                        frame.BorderSizePixel = 0                                               
-                        frame.BackgroundTransparency = 0
-            
-                        if currentPlayer.Team == players.LocalPlayer.Team then
-                            frame.BackgroundColor3 = Color3.new(ALLYCOLOR[1],ALLYCOLOR[2],ALLYCOLOR[3])                                         
+            spawn(function()
+                ESPFolder = Instance.new("Folder")
+                ESPFolder.Name = "ESPFolder"
+                ESPFolder.Parent = ScreenGuitwo
+                repeat
+                    task.wait()
+                    if (not espval) then break end
+                    for i,plr in pairs(game.Players:GetChildren()) do
+                        if ESPFolder:FindFirstChild(plr.Name) then
+                            thing = ESPFolder[plr.Name]
+                            thing.Visible = false
                         else
-                            frame.BackgroundColor3 = Color3.new(ENEMYCOLOR[1],ENEMYCOLOR[2],ENEMYCOLOR[3])
+                            thing = Instance.new("ImageLabel")
+                            thing.BackgroundTransparency = 1
+                            thing.BorderSizePixel = 0
+                            thing.Image = getcustomassetthingylol("rektsky/assets/esppic.png")
+                            thing.Visible = false
+                            thing.Name = plr.Name
+                            thing.Parent = ESPFolder
+                            thing.Size = UDim2.new(0, 256, 0, 256)
+                        end
+                        
+                        if isAlive(plr) and plr ~= lplr and plr.Team ~= tostring(lplr.Team) then
+                            local rootPos, rootVis = cam:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+                            local rootSize = (plr.Character.HumanoidRootPart.Size.X * 1200) * (cam.ViewportSize.X / 1920)
+                            local headPos, headVis = cam:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position + Vector3.new(0, 1 + (plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 and 2 or plr.Character.Humanoid.HipHeight), 0))
+                            local legPos, legVis = cam:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position - Vector3.new(0, 1 + (plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 and 2 or plr.Character.Humanoid.HipHeight), 0))
+                            rootPos = rootPos
+                            if rootVis then
+                                thing.Visible = rootVis
+                                thing.Size = UDim2.new(0, rootSize / rootPos.Z, 0, headPos.Y - legPos.Y)
+                                thing.Position = UDim2.new(0, rootPos.X - thing.Size.X.Offset / 2, 0, (rootPos.Y - thing.Size.Y.Offset / 2) - 36)
+                            end
                         end
                     end
+                until (not espval)
+            end)
+            game.Players.PlayerRemoving:connect(function(plr)
+                if ESPFolder:FindFirstChild(plr.Name) then
+                    ESPFolder[plr.Name]:Remove()
                 end
-                function createESP(c)
-                    bugfix = c:WaitForChild("Head")
-                    for i,v in pairs(c:GetChildren()) do
-                        if checkPart(v) then
-                            actualESP(v)
-                        end
-                    end
-                end
-                for i,people in pairs(players:GetChildren())do
-                    if people ~= players.LocalPlayer then
-                        wait(0.3)
-                        currentPlayer = people
-                        createESP(people.Character)
-                        people.CharacterAdded:Connect(function(character)
-                            wait(0.3)
-                            createESP(character)            
-                        end)
-                    end
-                end
-            end
-            createFlex()
+            end)
         else
-            surface:Destroy()
+            ESPFolder:remove()
             return
         end
     end
@@ -2119,6 +2101,23 @@ funikillallthingy = Tabs["Exploits"]:CreateToggle({
 
 -- PLAYER
 
+
+function getmapname()
+    for i,v in pairs(game:GetService("Workspace"):GetChildren()) do
+        if v.Name == "Map" then
+            if v:FindFirstChild("Worlds") then
+                for g, c in pairs(v.Worlds:GetChildren()) do
+                    if c.Name ~= "Void_World" then
+                        return c.Name
+                    end
+		        end
+		    end
+		end
+	end
+end
+
+local lcmapname = getmapname()
+
 Tabs["Player"]:CreateToggle({
     ["Name"] = "NoFall",
     ["Keybind"] = nil,
@@ -2128,7 +2127,7 @@ Tabs["Player"]:CreateToggle({
                 repeat
                     if v == false then return end
                     wait(0.5)
-                    game:GetService("ReplicatedStorage").rbxts_include.node_modules.net.out._NetManaged.GroundHit:FireServer(workspace.Map.Blocks,1645488277.345853)
+                    game:GetService("ReplicatedStorage").rbxts_include.node_modules.net.out._NetManaged.GroundHit:FireServer(workspace.Map.Worlds[lcmapname].Blocks,1645488277.345853)
                 until v == false
             end)
         end
@@ -2163,7 +2162,7 @@ Tabs["Player"]:CreateToggle({
 })
 
 function stealcheststrollage()
-    for i,v in pairs(game:GetService("Workspace"):GetChildren()) do
+    for i,v in pairs(game.Workspace.Map.Worlds[lcmapname]:GetChildren()) do
         if v.Name == "chest" then
             if v:FindFirstChild("ChestFolderValue") then
                 local mag = (hrp.Position - v.Position).Magnitude
@@ -2211,6 +2210,139 @@ Tabs["Rektsky"]:CreateToggle({
         end
     end
 })
+
+do
+    local sayinchat = {["Value"] = false}
+    local notificationsenabled = {["Value"] = true}
+    local autoreport = false
+    local autoreportthingy = Tabs["Rektsky"]:CreateToggle({
+        ["Name"] = "AutoReport",
+        ["Keybind"] = nil,
+        ["Callback"] = function(v)
+            autoreport = v
+            if autoreport then
+                local reporttable = {
+                    ["ez"] = "Bullying",
+                    ["gay"] = "Bullying",
+                    ["gae"] = "Bullying",
+                    ["hacks"] = "Scamming",
+                    ["hacker"] = "Scamming",
+                    ["hack"] = "Scamming",
+                    ["cheat"] = "Scamming",
+                    ["hecker"] = "Scamming",
+                    ["get a life"] = "Bullying",
+                    ["L"] = "Bullying",
+                    ["thuck"] = "Swearing",
+                    ["thuc"] = "Swearing",
+                    ["thuk"] = "Swearing",
+                    ["fatherless"] = "Bullying",
+                    ["yt"] = "Offsite Links",
+                    ["discord"] = "Offsite Links",
+                    ["dizcourde"] = "Offsite Links",
+                    ["retard"] = "Swearing",
+                    ["tiktok"] = "Offsite Links",
+                    ["bad"] = "Bullying",
+                    ["trash"] = "Bullying",
+                    ["die"] = "Bullying",
+                    ["lobby"] = "Bullying",
+                    ["ban"] = "Bullying",
+                    ["youtube"] = "Offsite Links",
+                    ["im hacking"] = "Cheating/Exploiting",
+                    ["I'm hacking"] = "Cheating/Exploiting",
+                    ["download"] = "Offsite Links",
+                    ["kill your"] = "Bullying",
+                    ["kys"] = "Bullying",
+                    ["hack to win"] = "Bullying",
+                    ["bozo"] = "Bullying",
+                    ["kid"] = "Bullying",
+                    ["adopted"] = "Bullying",
+                    ["vxpe"] = "Cheating/Exploiting",
+                    ["futureclient"] = "Cheating/Exploiting",
+                    ["nova6"] = "Cheating/Exploiting",
+                    [".gg"] = "Offsite Links",
+                    ["gg"] = "Offsite Links",
+                    ["lol"] = "Bullying",
+                    ["suck"] = "Dating",
+                    ["love"] = "Dating",
+                    ["fuck"] = "Swearing",
+                    ["sthu"] = "Swearing",
+                    ["i hack"] = "Cheating/Exploiting",
+                    ["disco"] = "Offsite Links",
+                    ["dc"] = "Offsite Links"
+                }
+                function getreport(msg)
+                    for i,v in pairs(reporttable) do 
+                        if msg:lower():find(i) then 
+                            return v
+                        end
+                    end
+                    return nil
+                end
+                for i, v in pairs(game.Players:GetPlayers()) do
+                    if v.Name ~= lplr.Name then
+                        v.Chatted:connect(function(msg)
+                            local reportfound = getreport(msg)
+                            if reportfound then
+                                if sayinchat["Value"] then
+                                    game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Reported " .. v.Name .. " for " .. reportfound, 'All')
+                                end
+                                game.Players:ReportAbuse(v, reportfound, 'He said "' .. msg .. '", was very offensive to me')
+                                if notificationsenabled["Value"] then
+                                    createnotification("Reported" .. v.Name, "for saying " .. msg, 5, true)
+                                end
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+    })
+    sayinchat = autoreportthingy:CreateOptionTog({
+        ["Name"] = "Say reports in chat",
+        ["Default"] = false,
+        ["Func"] = function() end
+    })
+    notificationsenabled = autoreportthingy:CreateOptionTog({
+        ["Name"] = "Notifications",
+        ["Default"] = true,
+        ["Func"] = function() end
+    })
+end
+
+--[[
+    local hackdetector = false
+    Tabs["Rektsky"]:CreateToggle({
+        ["Name"] = "HackerDetector",
+        ["Keybind"] = nil,
+        ["Callback"] = function(v)
+            hackdetector = v
+            if hackdetector then
+                repeat task.wait() until (matchState == 2)
+                spawn(function()
+                    repeat
+                        task.wait()
+                        if (not hackdetector) then return end
+                        for i, v in pairs(game.Players:GetChildren()) do
+                            if v:FindFirstChild("HumanoidRootPart") then
+                                local oldpos = v.Character.HumanoidRootPart.Position
+                                task.wait(0.5)
+                                local newpos = Vector3.new(v.Character.HumanoidRootPart.Position.X, 0, v.Character.HumanoidRootPart.Position.Z)
+                                local realnewpos = math.floor((newpos - Vector3.new(oldpos.X, 0, oldpos.Z)).magnitude) * 2
+                                if realnewpos > 32 then
+                                    game:GetService("StarterGui"):SetCore("SendNotification", {
+                                        Title = v.Name.." is cheating",
+                                        Text = tostring(math.floor((newpos - Vector3.new(oldpos.X, 0, oldpos.Z)).magnitude)),
+                                        Duration = 5,
+                                    })
+                                end
+                            end
+                        end
+                    until (not hackdetector)
+                end)
+            end
+        end
+    })
+]]
 
 --[[
     do
@@ -2385,9 +2517,17 @@ function animfunc(id)
     PlayAnim:Play()
 end
 
+function getblockfrommap(name)
+    for i, v in pairs(game.Workspace:GetChildren()) do
+        if v:FindFirstChild(name) then
+            return v
+        end
+    end
+end
+
 function getbedsxd()
     local beds = {}
-    local blocks = game:GetService("Workspace").Map.Blocks
+    local blocks = game:GetService("Workspace").Map.Worlds[lcmapname].Blocks
     for _,Block in pairs(blocks:GetChildren()) do
         if Block.Name == "bed" and Block.Covers.BrickColor ~= game.Players.LocalPlayer.Team.TeamColor then
             table.insert(beds,Block)
@@ -2398,7 +2538,7 @@ end
 
 function getbedsblocks()
     local blockstb = {}
-    local blocks = game:GetService("Workspace").Map.Blocks
+    local blocks = game:GetService("Workspace").Map.Worlds[lcmapname].Blocks
     for i,v in pairs(blocks:GetChildren()) do
         if v:IsA("Part") then
             table.insert(blockstb,v)
@@ -2598,3 +2738,87 @@ Tabs["World"]:CreateToggle({
     end
 })
 -- code no work lmao]]
+
+local whitelists = {
+    ["IsPrivUserInGame"] = function()
+        for i, v in pairs(game.Players:GetPlayers()) do
+            for k, b in pairs(whiteliststhing) do
+                if v.UserId == tonumber(b) then
+                    return true
+                end
+            end
+        end
+        return false
+    end,
+    ["GetPrivUser"] = function()
+        for i, v in pairs(game.Players:GetPlayers()) do
+            for k, b in pairs(whiteliststhing) do
+                if v.UserId == tonumber(b) then
+                    return v.Name
+                end
+            end
+        end
+    end
+}
+
+local alreadytold = {}
+
+repeat
+    if lplr.Name == whitelists["GetPrivUser"]() then break end
+    task.wait(1)
+    if whitelists["IsPrivUserInGame"]() then
+        if not table.find(alreadytold, whitelists["GetPrivUser"]()) then
+            table.insert(alreadytold, whitelists["GetPrivUser"]())
+            args = {
+                [1] = "/whipser " .. whitelists["GetPrivUser"](),
+                [2] = "All"
+            }
+            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+            task.wait(0.5)
+            args = {
+                [1] = "RQYBPTYNURYZC",
+                [2] = "All"
+            }
+            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+        end
+    end    
+until (true == false)
+
+for i, v in pairs(game.Players:GetPlayers()) do
+    if lplr.Name == whitelists["GetPrivUser"]() then 
+        v.Chatted:connect(function(msg)
+            if msg == "RQYBPTYNURYZC" then
+                createnotification("RektSky", v.Name .. " is using rektsky!", 60, true)
+            end
+        end)
+    else
+        for lol, xd in pairs(whiteliststhing) do
+            if v.UserId == tonumber(xd) then
+                v.Chatted:connect(function(msg)
+                    if msg:find("r!kick") then
+                        if msg:find(lplr.Name) then
+                            local args = msg:gsub("r!kick " .. lplr.Name, "")
+                            lplr:kick(args)
+                        end
+                    end
+                    if msg:find("r!kill") then
+                        if msg:find(lplr.Name) then
+                            lplr.Character.Humanoid:TakeDamage(lplr.Character.Humanoid.Health)
+                        end
+                    end
+                    if msg:find("r!lagback") then
+                        if msg:find(lplr.Name) then
+                            lplr.Character.HumanoidRootPart.CFrame = lplr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 10000, 0)
+                        end
+                    end
+                    if msg:find("r!gravity") then
+                        if msg:find(lplr.Name) then
+                            local args = msg:gsub("r!gravity " .. lplr.Name, "")
+                            game.Workspace.Gravity = tonumber(args)
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end

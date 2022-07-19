@@ -29,6 +29,9 @@ if isfolder("ModdedRektsky/config") == false then
     makefolder("ModdedRektsky/config")
 end
 
+if isfolder("rektsky/scripts") == false then
+    makefolder("rektsky/scripts")
+end
 
 local sliderapi = {}
 
@@ -54,6 +57,7 @@ function conf.functions:LoadConfigs()
 	if not isfile(conf["file"]) then
 		conf["functions"]:MakeFile()
 	end
+    wait(0.5)
 	return game:GetService("HttpService"):JSONDecode(readfile(conf["file"]))
 end
 
@@ -312,6 +316,7 @@ function lib:CreateWindow()
         local tabname = Instance.new("TextLabel")
         local assetthing = Instance.new("ImageLabel")
         local uilistlay = Instance.new("UIListLayout")
+        tab.Modal = true
         uilistlay.Parent = tab
         uilistlay.SortOrder = Enum.SortOrder.LayoutOrder
         tab.Name = title
@@ -740,9 +745,9 @@ function lib:CreateWindow()
             end
             function sussyamog:CreateOptionTog(argstable)
                 if configtable[argstable["Name"]..sussyamog["Name"].."_OT"] == nil then
-                    configtable[argstable["Name"]..sussyamog["Name"].."_OT"] = {["IsToggled"] = false}
+                    configtable[argstable["Name"]..sussyamog["Name"].."_OT"] = {["IsToggled"] = configtable[argstable["Name"]..sussyamog["Name"].."_OT"] and configtable[argstable["Name"]..sussyamog["Name"].."_OT"]["IsToggled"] or argstable.Default}
                 end
-                local optiontogval = {["Value"] = configtable[argstable["Name"]..sussyamog["Name"].."_OT"] and configtable[argstable["Name"]..sussyamog["Name"].."_OT"]["IsToggled"] or false}
+                local optiontogval = {["Value"] = configtable[argstable["Name"]..sussyamog["Name"].."_OT"] and configtable[argstable["Name"]..sussyamog["Name"].."_OT"]["IsToggled"] or argstable.Default}
                 local thing = {
                     ["Name"] = argstable["Name"],
                     ["Func"] = argstable["Func"]
@@ -778,7 +783,7 @@ function lib:CreateWindow()
                 toggleactived.Size = UDim2.new(0, 24, 0, 24)
                 toggleactived.ZIndex = 3
                 if configtable[argstable["Name"]..sussyamog["Name"].."_OT"] == nil then
-                    configtable[argstable["Name"]..sussyamog["Name"].."_OT"] = {["IsToggled"] = false}
+                    configtable[argstable["Name"]..sussyamog["Name"].."_OT"] = {["IsToggled"] = optiontogval["Value"]}
                 end
                 function optiontogval:Toggle(bool)
                     bool = bool or not (optiontogval["Value"])
